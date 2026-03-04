@@ -1,7 +1,22 @@
-# ai-service/app/main.py
+from fastapi import FastAPI, UploadFile, File
+from app.services.color_extractor import extract_palette
+import shutil
+import os
 
-from services.color_extractor import extract_palette
+app = FastAPI()
 
-if __name__ == "__main__":
-    palette = extract_palette("sample.jpg", k=5)
-    print("Extracted palette:", palette)
+@app.post("/analyze")
+async def analyze_image(file: UploadFile = File(...)):
+    
+    file_location = f"temp_{file.filename}"
+    
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    palette = extract_palette(file_location, k=5)
+
+    os.remove(file_location)
+
+    return {
+        "palette": palette
+    } 
