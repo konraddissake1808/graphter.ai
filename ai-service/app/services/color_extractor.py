@@ -14,9 +14,20 @@ def extract_palette(image_path: str, k: int = 5):
 
     colors = kmeans.cluster_centers_.astype(int)
 
-    hex_colors = [
-        "#{:02x}{:02x}{:02x}".format(c[0], c[1], c[2])
-        for c in colors
-    ]
+    from collections import Counter
+    counts = Counter(kmeans.labels_)
+    total_pixels = len(pixels)
 
-    return hex_colors
+    palette_data = []
+    for i, c in enumerate(colors):
+        hex_color = "#{:02x}{:02x}{:02x}".format(c[0], c[1], c[2])
+        percentage = (counts[i] / total_pixels) * 100
+        palette_data.append({
+            "color": hex_color,
+            "percentage": round(percentage, 2)
+        })
+
+    # Sort by percentage descending so dominant is first
+    palette_data.sort(key=lambda x: x["percentage"], reverse=True)
+
+    return palette_data
