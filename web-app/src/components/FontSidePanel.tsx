@@ -4,6 +4,8 @@ import { DetectedFont } from "@/contexts/PaletteContext";
 interface FontSidePanelProps {
   selectedFont: DetectedFont | null;
   onClose: () => void;
+  isAuthenticated?: boolean;
+  onLoginRequest?: () => void;
 }
 
 interface FontRelation {
@@ -11,16 +13,23 @@ interface FontRelation {
   similarity: number;
 }
 
-export default function FontSidePanel({ selectedFont, onClose }: FontSidePanelProps) {
+export default function FontSidePanel({ 
+  selectedFont, 
+  onClose,
+  isAuthenticated = false,
+  onLoginRequest
+}: FontSidePanelProps) {
   const [similarFonts, setSimilarFonts] = useState<FontRelation[]>([]);
   const [complementaryFonts, setComplementaryFonts] = useState<FontRelation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedFont) {
       setSimilarFonts([]);
       setComplementaryFonts([]);
+      setSaveStatus("idle");
       return;
     }
 
@@ -44,6 +53,31 @@ export default function FontSidePanel({ selectedFont, onClose }: FontSidePanelPr
 
     fetchRelatedFonts();
   }, [selectedFont]);
+
+  const handleSaveFont = async () => {
+    if (!selectedFont) return;
+    
+    setSaveStatus("saving");
+    try {
+      const response = await fetch("/api/fonts/saved", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: selectedFont.name,
+          similarity: selectedFont.similarity
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save font");
+      
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (err: any) {
+      console.error(err);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  };
 
   const fontDisplayName = selectedFont?.name.replace(/_/g, " ").replace(/-/g, " ") || "";
 
@@ -97,6 +131,51 @@ export default function FontSidePanel({ selectedFont, onClose }: FontSidePanelPr
             ) : (
               <div className="flex flex-col gap-8 w-full shrink-0 pb-8">
                 
+                {/* Save Font Button */}
+                <div className="mt-2 shrink-0">
+                  {isAuthenticated ? (
+                    <button 
+                      onClick={handleSaveFont}
+                      disabled={saveStatus === "saving" || saveStatus === "success"}
+                      className={`w-full py-3 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg ${
+                        saveStatus === "success" ? "bg-emerald-500 text-white shadow-emerald-500/30 cursor-default" :
+                        saveStatus === "error" ? "bg-red-500 text-white shadow-red-500/30" :
+                        "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/30 disabled:bg-indigo-400"
+                      }`}
+                    >
+                      {saveStatus === "saving" ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          Saving...
+                        </>
+                      ) : saveStatus === "success" ? (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                          Font Saved!
+                        </>
+                      ) : saveStatus === "error" ? (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                          Error Saving
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                          Save Font to Collection
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={onLoginRequest}
+                      className="w-full py-3 px-6 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                       Log in to Save Font
+                    </button>
+                  )}
+                </div>
+
                 {/* Similar Fonts */}
                 {similarFonts.length > 0 && (
                   <div className="flex flex-col gap-3">

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fontName: string } }
+  { params }: { params: Promise<{ fontName: string }> }
 ) {
   try {
-    const fontName = params.fontName;
+    const { fontName } = await params;
     if (!fontName) {
       return NextResponse.json({ error: "Font name required" }, { status: 400 });
     }
