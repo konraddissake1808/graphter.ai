@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     // Forward the formData to the FastAPI backend
     // We use 127.0.0.1 instead of localhost to avoid potential IPv6 resolution issues in Node.js
-    const response = await fetch("http://127.0.0.1:8000/analyze", {
+    const response = await fetch("http://127.0.0.1:8000/colors", {
       method: "POST",
       body: formData,
     });

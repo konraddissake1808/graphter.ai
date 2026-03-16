@@ -7,14 +7,16 @@ import Link from "next/link";
 
 import { generatePalettes } from "@/utils/colors";
 import ColorSidePanel, { SelectedColorData } from "@/components/ColorSidePanel";
-import { usePaletteContext } from "@/contexts/PaletteContext";
+import FontSidePanel from "@/components/FontSidePanel";
+import { usePaletteContext, DetectedFont } from "@/contexts/PaletteContext";
 
 export default function Home() {
   const { data: session } = useSession();
-  const { imageFile, setImageFile, imagePreview, setImagePreview, palette, setPalette } = usePaletteContext();
+  const { imageFile, setImageFile, imagePreview, setImagePreview, palette, setPalette, fonts, setFonts } = usePaletteContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<SelectedColorData | null>(null);
+  const [selectedFont, setSelectedFont] = useState<DetectedFont | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveExtractedStatus, setSaveExtractedStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
 
@@ -24,6 +26,7 @@ export default function Home() {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
       setPalette([]);
+      setFonts([]);
       setError(null);
     }
   };
@@ -38,17 +41,28 @@ export default function Home() {
     formData.append("file", imageFile);
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
+      // Fire both requests concurrently
+      const [colorRes, fontRes] = await Promise.allSettled([
+        fetch("/api/color", { method: "POST", body: formData }),
+        fetch("/api/fonts", { method: "POST", body: formData })
+      ]);
 
-      if (!response.ok) {
+      if (colorRes.status === "fulfilled" && colorRes.value.ok) {
+        const colorData = await colorRes.value.json();
+        setPalette(colorData.palette || []);
+      } else {
         throw new Error("Failed to extract colors");
       }
 
-      const data = await response.json();
-      setPalette(data.palette);
+      if (fontRes.status === "fulfilled" && fontRes.value.ok) {
+        const fontData = await fontRes.value.json();
+        // If the backend returns no features, matches might be empty
+        setFonts(fontData.matches || []);
+      } else {
+        console.error("Font extraction failed:", fontRes);
+        setFonts([]);
+      }
+
     } catch (err: any) {
       setError(err.message || "An error occurred");
     } finally {
@@ -242,6 +256,47 @@ export default function Home() {
             </div>
           )}
 
+          {/* Detected Fonts Section */}
+          {palette.length > 0 && (
+            <div className="w-full mt-2 bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-700/50">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                Detected Typography
+              </h3>
+              
+              {fonts.length > 0 && Math.max(...fonts.map(f => f.similarity)) > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {fonts.map((f, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => setSelectedFont(f)}
+                      className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800/50 transition-colors">
+                          Aa
+                        </div>
+                        <span className="font-medium text-zinc-900 dark:text-white">
+                          {f.name.replace(/_/g, " ").replace(/-/g, " ")}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors">
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Match</span>
+                        <span className={`text-xs font-bold ${(f.similarity * 100) > 85 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                          {(f.similarity * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <span className="text-zinc-400 dark:text-zinc-500 text-sm">No text detected in this image.</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Save Extracted Palette Button */}
           {palette.length > 0 && session && (
             <button
@@ -284,6 +339,11 @@ export default function Home() {
         saveStatus={saveStatus}
         isAuthenticated={!!session}
         onLoginRequest={() => signIn()}
+      />
+
+      <FontSidePanel
+        selectedFont={selectedFont}
+        onClose={() => setSelectedFont(null)}
       />
     </div>
   );
