@@ -1,0 +1,42 @@
+﻿--- Testing Font Detection ---
+Extracted 13 contours.
+Glyph 0: Predicted Akronim-Regular (Dist: 0.105)
+Glyph 1: Predicted Akronim-Regular (Dist: 0.052)
+Glyph 2: Predicted Akronim-Regular (Dist: 0.044)
+Glyph 3: Predicted AlbertSans-Italic (Dist: 0.114)
+Glyph 4: Predicted AbrilFatface-Regular (Dist: 0.257)
+Glyph 5: Predicted AlegreyaSans-Regular (Dist: 0.258)
+Glyph 6: Predicted Akronim-Regular (Dist: 0.368)
+Glyph 7: Predicted AlfaSlabOne-Regular (Dist: 0.250)
+Glyph 8: Predicted Roboto Mono-Regular (Dist: 0.176)
+Glyph 9: Predicted AlexBrush-Regular (Dist: 0.409)
+Glyph 10: Predicted Aboreto-Regular (Dist: 0.187)
+Glyph 11: Predicted Alata-Regular (Dist: 0.348)
+Glyph 12: Predicted AlexBrush-Regular (Dist: 0.441)
+Valid votes (<0.6): 13/13
+--- Matcher Result ---
+{
+  "category": "Serif",
+  "matches": [
+    {
+      "name": "Akronim-Regular",
+      "similarity": 0.3077
+    },
+    {
+      "name": "AlexBrush-Regular",
+      "similarity": 0.1538
+    },
+    {
+      "name": "Aboreto-Regular",
+      "similarity": 0.0769
+    },
+    {
+      "name": "AbrilFatface-Regular",
+      "similarity": 0.0769
+    },
+    {
+      "name": "Alata-Regular",
+      "similarity": 0.0769
+    }
+  ]
+}

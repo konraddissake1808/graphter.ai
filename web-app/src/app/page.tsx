@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { generatePalettes } from "@/utils/colors";
 import ColorSidePanel, { SelectedColorData } from "@/components/ColorSidePanel";
 import FontSidePanel from "@/components/FontSidePanel";
 import { usePaletteContext, DetectedFont } from "@/contexts/PaletteContext";
+import { getFontFamily, getGoogleFontsUrl } from "@/utils/fonts";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -17,6 +18,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<SelectedColorData | null>(null);
   const [selectedFont, setSelectedFont] = useState<DetectedFont | null>(null);
+  const [fontUrl, setFontUrl] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveExtractedStatus, setSaveExtractedStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
 
@@ -138,8 +140,20 @@ export default function Home() {
     }
   };
 
+  // Dynamic font loading effect
+  useEffect(() => {
+    if (fonts && fonts.length > 0) {
+      const fontFamilies = fonts.map(f => getFontFamily(f.name));
+      setFontUrl(getGoogleFontsUrl(fontFamilies));
+    } else {
+      setFontUrl("");
+    }
+  }, [fonts]);
+
   return (
     <div className="flex min-h-screen flex-col items-center p-8 bg-zinc-50 dark:bg-zinc-950 font-sans">
+      {/* Dynamic Font Loader */}
+      {fontUrl && <link rel="stylesheet" href={fontUrl} />}
       
       {/* Auth Header */}
       <header className="w-full max-w-2xl flex justify-end mb-4">
@@ -279,13 +293,19 @@ export default function Home() {
                     <div 
                       key={i} 
                       onClick={() => setSelectedFont(f)}
-                      className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
+                      className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group shrink-0 overflow-hidden"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800/50 transition-colors">
+                        <div 
+                          className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800/50 transition-colors shrink-0 overflow-hidden"
+                          style={{ fontFamily: getFontFamily(f.name) }}
+                        >
                           Aa
                         </div>
-                        <span className="font-medium text-zinc-900 dark:text-white">
+                        <span 
+                          className="font-medium text-zinc-900 dark:text-white"
+                          style={{ fontFamily: getFontFamily(f.name) }}
+                        >
                           {f.name.replace(/_/g, " ").replace(/-/g, " ")}
                         </span>
                       </div>

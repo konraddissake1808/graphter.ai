@@ -1,0 +1,25 @@
+{
+  "category": "Serif",
+  "matches": [
+    {
+      "name": "Afacad-Regular",
+      "similarity": 0.2222
+    },
+    {
+      "name": "Roboto Mono-Regular",
+      "similarity": 0.2222
+    },
+    {
+      "name": "AlanSans-Regular",
+      "similarity": 0.1667
+    },
+    {
+      "name": "GoogleSans_Regular",
+      "similarity": 0.1111
+    },
+    {
+      "name": "Abel-Regular",
+      "similarity": 0.0556
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FontSidePanel from "@/components/FontSidePanel";
 import { DetectedFont } from "@/contexts/PaletteContext";
+import { getFontFamily, getGoogleFontsUrl } from "@/utils/fonts";
 
 interface SavedFont {
   _id: string;
@@ -21,6 +22,7 @@ export default function MyFonts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedFont, setSelectedFont] = useState<DetectedFont | null>(null);
+  const [fontUrl, setFontUrl] = useState<string>("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -38,6 +40,10 @@ export default function MyFonts() {
       }
       const data = await res.json();
       setFonts(data.fonts);
+      
+      // Load fonts for all saved fonts
+      const fontFamilies = data.fonts.map((f: SavedFont) => getFontFamily(f.name));
+      setFontUrl(getGoogleFontsUrl(fontFamilies));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -61,6 +67,9 @@ export default function MyFonts() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8 font-sans">
+      {/* Dynamic Font Loader */}
+      {fontUrl && <link rel="stylesheet" href={fontUrl} />}
+      
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-12">
           <div>
@@ -112,14 +121,20 @@ export default function MyFonts() {
                 })}
               >
                 {/* Font Preview Area */}
-                <div className="h-32 w-full bg-indigo-50 dark:bg-indigo-900/10 flex items-center justify-center border-b border-zinc-100 dark:border-zinc-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/20 transition-colors">
+                <div 
+                  className="h-32 w-full bg-indigo-50 dark:bg-indigo-900/10 flex items-center justify-center border-b border-zinc-100 dark:border-zinc-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/20 transition-colors shrink-0 overflow-hidden"
+                  style={{ fontFamily: getFontFamily(item.name) }}
+                >
                   <span className="text-5xl font-bold text-indigo-500 dark:text-indigo-400">Aa</span>
                 </div>
                 
                 {/* Font Details */}
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-zinc-900 dark:text-white truncate max-w-[140px]">
+                    <h3 
+                      className="font-bold text-zinc-900 dark:text-white truncate max-w-[140px]"
+                      style={{ fontFamily: getFontFamily(item.name) }}
+                    >
                       {item.name.replace(/_/g, " ").replace(/-/g, " ")}
                     </h3>
                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">

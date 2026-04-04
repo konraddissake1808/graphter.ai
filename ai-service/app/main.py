@@ -46,13 +46,11 @@ async def detect_font(file: UploadFile = File(...)):
 
     try:
         query_features = detect_font_features(file_location)
-        matches = match_fonts(query_features, _DATASET_DIR, top_k=5)
+        result = match_fonts(query_features, _DATASET_DIR, top_k=5)
     finally:
         os.remove(file_location)
 
-    return {
-        "matches": matches
-    }
+    return result
 
 @app.get("/fonts/{font_name}/related")
 async def get_font_relations(font_name: str):

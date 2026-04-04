@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DetectedFont } from "@/contexts/PaletteContext";
+import { getFontFamily, getGoogleFontsUrl } from "@/utils/fonts";
 
 interface FontSidePanelProps {
   selectedFont: DetectedFont | null;
@@ -24,12 +25,14 @@ export default function FontSidePanel({
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [fontUrl, setFontUrl] = useState<string>("");
 
   useEffect(() => {
     if (!selectedFont) {
       setSimilarFonts([]);
       setComplementaryFonts([]);
       setSaveStatus("idle");
+      setFontUrl("");
       return;
     }
 
@@ -43,6 +46,14 @@ export default function FontSidePanel({
         const data = await res.json();
         setSimilarFonts(data.similar || []);
         setComplementaryFonts(data.complementary || []);
+
+        // Load fonts for all visible candidates
+        const fontFamilies = [
+          getFontFamily(selectedFont.name),
+          ...(data.similar || []).map((f: any) => getFontFamily(f.name)),
+          ...(data.complementary || []).map((f: any) => getFontFamily(f.name))
+        ];
+        setFontUrl(getGoogleFontsUrl(fontFamilies));
       } catch (err: any) {
         console.error(err);
         setError(err.message || "An error occurred fetching typography.");
@@ -83,6 +94,9 @@ export default function FontSidePanel({
 
   return (
     <>
+      {/* Dynamic Font Loader */}
+      {fontUrl && <link rel="stylesheet" href={fontUrl} />}
+      
       {/* Side Panel Overlay */}
       <div 
         className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-300 ${selectedFont ? 'opacity-100 visible' : 'opacity-0 invisible'}`} 
@@ -103,11 +117,14 @@ export default function FontSidePanel({
             </button>
             
             <div className="flex flex-col items-center justify-center mt-4 shrink-0 px-2">
-              <div className="w-32 h-32 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 border-2 border-indigo-100 dark:border-indigo-800/50 mb-6 flex items-center justify-center shadow-inner">
+              <div 
+                className="w-32 h-32 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 border-2 border-indigo-100 dark:border-indigo-800/50 mb-6 flex items-center justify-center shadow-inner overflow-hidden"
+                style={{ fontFamily: getFontFamily(selectedFont.name) }}
+              >
                 <span className="text-6xl font-bold">Aa</span>
               </div>
               
-              <h2 className="text-2xl font-bold tracking-tight text-center text-zinc-900 dark:text-white mb-3">
+              <h2 className="text-2xl font-bold tracking-tight text-center text-zinc-900 dark:text-white mb-3 px-4">
                 {fontDisplayName}
               </h2>
               
@@ -188,10 +205,16 @@ export default function FontSidePanel({
                      <div className="flex flex-col gap-2">
                        {similarFonts.map((f, i) => (
                          <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex flex-col items-center justify-center">
-                              <span className="text-xs font-bold leading-none translate-y-px">Aa</span>
+                            <div 
+                              className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex flex-col items-center justify-center shrink-0 overflow-hidden"
+                              style={{ fontFamily: getFontFamily(f.name) }}
+                            >
+                              <span className="text-xl font-bold leading-none translate-y-px">Aa</span>
                             </div>
-                            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">
+                            <span 
+                              className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate"
+                              style={{ fontFamily: getFontFamily(f.name) }}
+                            >
                               {f.name.replace(/_/g, " ").replace(/-/g, " ")}
                             </span>
                          </div>
@@ -212,10 +235,16 @@ export default function FontSidePanel({
                      <div className="flex flex-col gap-2">
                        {complementaryFonts.map((f, i) => (
                          <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex flex-col items-center justify-center">
-                              <span className="text-xs font-bold leading-none translate-y-px">Aa</span>
+                            <div 
+                              className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex flex-col items-center justify-center shrink-0 overflow-hidden"
+                              style={{ fontFamily: getFontFamily(f.name) }}
+                            >
+                              <span className="text-xl font-bold leading-none translate-y-px">Aa</span>
                             </div>
-                            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">
+                            <span 
+                              className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate"
+                              style={{ fontFamily: getFontFamily(f.name) }}
+                            >
                               {f.name.replace(/_/g, " ").replace(/-/g, " ")}
                             </span>
                          </div>
