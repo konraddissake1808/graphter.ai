@@ -205,11 +205,11 @@ export default function Home() {
 
       <main className="flex flex-col items-center w-full max-w-2xl gap-8 p-8 bg-white dark:bg-zinc-900 rounded-3xl shadow-xl border border-zinc-200 dark:border-zinc-800">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          Color Extractor
+          graphter.ai
         </h1>
         
-        <p className="text-zinc-500 dark:text-zinc-400 text-center">
-          Upload an image to extract its dominant color palette.
+        <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-lg">
+          Upload an image to extract its dominant colors and detect embedded typography.
         </p>
 
         <div className="flex w-full flex-col gap-6 items-center">
